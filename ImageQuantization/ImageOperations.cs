@@ -4,6 +4,8 @@ using System.Text;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Drawing.Imaging;
+using System.Collections;
+using System.Collections.Generic;
 ///Algorithms Project
 ///Intelligent Scissors
 ///
@@ -13,6 +15,8 @@ namespace ImageQuantization
     /// <summary>
     /// Holds the pixel color in 3 byte values: red, green and blue
     /// </summary>
+    /// 
+
     public struct RGBPixel
     {
         public byte red, green, blue;
@@ -21,8 +25,13 @@ namespace ImageQuantization
     {
         public double red, green, blue;
     }
-    
-  
+    public struct edje
+    {
+        public double w;
+        public int u, v;
+    }
+   
+
     /// <summary>
     /// Library of static functions that deal with images
     /// </summary>
@@ -33,8 +42,17 @@ namespace ImageQuantization
         /// </summary>
         /// <param name="ImagePath">Image file path</param>
         /// <returns>2D array of colors</returns>
+        public static double calc(RGBPixel x, RGBPixel y)
+        {
+            double ret =  Math.Abs(x.red - y.red)* Math.Abs(x.red - y.red);
+            ret += Math.Abs(x.green - y.green) * Math.Abs(x.green - y.green);
+            ret += Math.Abs(x.blue - y.blue) * Math.Abs(x.blue - y.blue);
+            return Math.Sqrt(ret);
+        }
+
         public static RGBPixel[,] OpenImage(string ImagePath)
         {
+            
             Bitmap original_bm = new Bitmap(ImagePath);
             int Height = original_bm.Height;
             int Width = original_bm.Width;
@@ -124,9 +142,7 @@ namespace ImageQuantization
             //==============
             int Height = ImageMatrix.GetLength(0);
             int Width = ImageMatrix.GetLength(1);
-
             Bitmap ImageBMP = new Bitmap(Width, Height, PixelFormat.Format24bppRgb);
-
             unsafe
             {
                 BitmapData bmd = ImageBMP.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadWrite, ImageBMP.PixelFormat);
@@ -152,94 +168,121 @@ namespace ImageQuantization
         }
 
 
-       /// <summary>
-       /// Apply Gaussian smoothing filter to enhance the edge detection 
-       /// </summary>
-       /// <param name="ImageMatrix">Colored image matrix</param>
-       /// <param name="filterSize">Gaussian mask size</param>
-       /// <param name="sigma">Gaussian sigma</param>
-       /// <returns>smoothed color image</returns>
+        /// <summary>
+        /// Apply Gaussian smoothing filter to enhance the edge detection 
+        /// </summary>
+        /// <param name="ImageMatrix">Colored image matrix</param>
+        /// <param name="filterSize">Gaussian mask size</param>
+        /// <param name="sigma">Gaussian sigma</param>
+        /// <returns>smoothed color image</returns>
+        /// 
+       public static HashSet<RGBPixel> st = new HashSet<RGBPixel>();
+
+
         public static RGBPixel[,] GaussianFilter1D(RGBPixel[,] ImageMatrix, int filterSize, double sigma)
         {
+
             int Height = GetHeight(ImageMatrix);
             int Width = GetWidth(ImageMatrix);
 
             RGBPixelD[,] VerFiltered = new RGBPixelD[Height, Width];
             RGBPixel[,] Filtered = new RGBPixel[Height, Width];
+            int[,,] visted = new int[260, 260, 260];
+            RGBPixel []distinct = new RGBPixel[60000];
+            int ptr = 0;
 
-           
-            // Create Filter in Spatial Domain:
-            //=================================
-            //make the filter ODD size
-            if (filterSize % 2 == 0) filterSize++;
+            for (int i = 0; i < 256; i++)
+                for (int j = 0; j < 256; j++)
+                    for (int k = 0; k < 256; k++)
+                        visted[i,j,k] = 0;
+            //map for get distincit colors              
 
-            double[] Filter = new double[filterSize];
-
-            //Compute Filter in Spatial Domain :
-            //==================================
-            double Sum1 = 0;
-            int HalfSize = filterSize / 2;
-            for (int y = -HalfSize; y <= HalfSize; y++)
-            {
-                //Filter[y+HalfSize] = (1.0 / (Math.Sqrt(2 * 22.0/7.0) * Segma)) * Math.Exp(-(double)(y*y) / (double)(2 * Segma * Segma)) ;
-                Filter[y + HalfSize] = Math.Exp(-(double)(y * y) / (double)(2 * sigma * sigma));
-                Sum1 += Filter[y + HalfSize];
-            }
-            for (int y = -HalfSize; y <= HalfSize; y++)
-            {
-                Filter[y + HalfSize] /= Sum1;
-            }
-
-            //Filter Original Image Vertically:
-            //=================================
-            int ii, jj;
-            RGBPixelD Sum;
-            RGBPixel Item1;
-            RGBPixelD Item2;
-
-            for (int j = 0; j < Width; j++)
-                for (int i = 0; i < Height; i++)
-                {
-                    Sum.red = 0;
-                    Sum.green = 0;
-                    Sum.blue = 0;
-                    for (int y = -HalfSize; y <= HalfSize; y++)
-                    {
-                        ii = i + y;
-                        if (ii >= 0 && ii < Height)
-                        {
-                            Item1 = ImageMatrix[ii, j];
-                            Sum.red += Filter[y + HalfSize] * Item1.red;
-                            Sum.green += Filter[y + HalfSize] * Item1.green;
-                            Sum.blue += Filter[y + HalfSize] * Item1.blue;
-                        }
-                    }
-                    VerFiltered[i, j] = Sum;
-                }
-
-            //Filter Resulting Image Horizontally:
-            //===================================
             for (int i = 0; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                 {
-                    Sum.red = 0;
-                    Sum.green = 0;
-                    Sum.blue = 0;
-                    for (int x = -HalfSize; x <= HalfSize; x++)
+                    RGBPixel r = ImageMatrix[i, j];
+
+                    if (visted[r.red,r.green,r.blue]==0)
                     {
-                        jj = j + x;
-                        if (jj >= 0 && jj < Width)
-                        {
-                            Item2 = VerFiltered[i, jj];
-                            Sum.red += Filter[x + HalfSize] * Item2.red;
-                            Sum.green += Filter[x + HalfSize] * Item2.green;
-                            Sum.blue += Filter[x + HalfSize] * Item2.blue;
-                        }
+                        distinct[ptr++] = ImageMatrix[i, j];
+                        visted[r.red, r.green, r.blue] = 1;
+
                     }
-                    Filtered[i, j].red = (byte)Sum.red;
-                    Filtered[i, j].green = (byte)Sum.green;
-                    Filtered[i, j].blue = (byte)Sum.blue;
+                   
+                }            
+            ArrayList[] adj = new ArrayList[ptr];
+            for(int i = 0;i<ptr;i++)
+                adj[i] = new ArrayList();   
+            int []vis = new int[ptr];
+            int n = ptr;
+            for (int i = 0; i <n; i++)
+            {
+                vis[i] = 0;
+            }
+            vis[0] = 1;
+            double sum = 0;
+            edje[] mn = new edje[n];
+            edje temp;
+            temp.w = 1e9;
+            temp.v = 0;
+            temp.u = 0;
+            for(int i = 1; i < n; i++)
+            {
+                mn[i].w = calc(distinct[i], distinct[0]);
+                mn[i].u = i;
+                mn[i].v = 0;
+            }
+            vis[0] = 1;
+            mn[0].w = 1e9;
+            while(true)
+            {
+                bool f = false;
+                temp.w = 1e9;
+                for(int i =1; i<n; i++)
+                {
+                    if (temp.w > mn[i].w)
+                    {
+                        temp = mn[i];
+                        f = true;
+                    }
                 }
+                if (!f)
+                    break;
+                adj[temp.u].Add(temp.v);
+                adj[temp.v].Add(temp.u);
+                sum += temp.w;
+                vis[temp.u] = 1;
+                mn[temp.u].w = 1e9;
+                for(int i = 1;i<n;i++)
+                {
+                    if (vis[i] == 1)
+                        continue;
+                    edje temp2;
+                    temp2.w = calc(distinct[temp.u], distinct[i]);
+                    temp2.u = i;
+                    temp2.v = temp.u;
+                    if (mn[i].w > temp2.w)
+                        mn[i] = temp2;
+
+                }
+            }
+            int ret = 0;
+            for (int i = 0; i < n; i++)
+                ret += vis[i];
+            MainForm.v = sum ;
+
+            // Create Filter in Spatial Domain:
+            //=================================
+            //make the filter ODD size
+            
+
+            //Compute Filter in Spatial Domain :
+            //==================================
+          
+
+            //Filter Original Image Vertically:
+            //=================================
+          
 
             return Filtered;
         }
