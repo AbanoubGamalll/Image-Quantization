@@ -43,6 +43,12 @@ namespace ImageQuantization
             ImageOperations.DisplayImage(ImageMatrix, pictureBox2);
             txt_sumMST.Text = v.ToString();
         }
+        
+        public static void show_time(double x)
+        {
+            MessageBox.Show("Elapsed Time is { " +x.ToString() + " } in seconds");
+        }
+
 
         private void txt_sumMST_TextChanged(object sender, EventArgs e)
         {

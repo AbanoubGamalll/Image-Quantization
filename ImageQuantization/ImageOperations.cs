@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 ///Algorithms Project
 ///Intelligent Scissors
 ///
@@ -177,51 +178,73 @@ namespace ImageQuantization
         /// <returns>smoothed color image</returns>
         /// 
 
-        public static RGBPixel[,] GaussianFilter1D(RGBPixel[,] ImageMatrix, int filterSize,double sigma)
+
+
+        public static RGBPixel[,] GaussianFilter1D(RGBPixel[,] ImageMatrix, int filterSize, double sigma)
         {
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            //////////////////////////////////////
+            //Graph construction
+            //////////////////////////////////////
 
             int Height = GetHeight(ImageMatrix);
             int Width = GetWidth(ImageMatrix);
-            // visted array to check if the colour new or not 
-            int[,,] visted = new int[260,260,260];
-            // to map every colour to a colour from k selected colours 
+
+            // Checking if the color is visted or not by A new Array 
+
+            int[,,] visted = new int[260, 260, 260];
+
+            //Map passing by every colour to select k-cluster  
+
             RGBPixel[,,] map = new RGBPixel[260, 260, 260];
-            // to store the distincit colours
-            RGBPixel []distinct = new RGBPixel[6000000];
+
+            // Array selecting Distinct colours
+
+            RGBPixel[] distinct = new RGBPixel[6000000];
+
             int ptr = 0;
-            for (int i = 0; i < 256; i++)
+
+/*            for (int i = 0; i < 256; i++)
                 for (int j = 0; j < 256; j++)
                     for (int k = 0; k < 256; k++)
                         visted[i, j, k] = 0;
+*/
+
+            //complexty=N^2
             for (int i = 0; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                 {
                     RGBPixel r = ImageMatrix[i, j];
 
-                    if (visted[r.red,r.green,r.blue]==0)
+                    if (visted[r.red, r.green, r.blue] == 0)
                     {
                         distinct[ptr++] = ImageMatrix[i, j];
                         visted[r.red, r.green, r.blue] = 1;
-
                     }
-                   
-                } 
-            
-            // adj list to store the mst
+                }
+
+            ///////////////////////////////////////////////
+            //MST Code impilimentation
+            //////////////////////////////////////////////
+
             ArrayList[] adj = new ArrayList[ptr];
             // to store the colours in the same cluster
             ArrayList[] cluster = new ArrayList[ptr];
+          
             for (int i = 0; i < ptr; i++)
             {
                 adj[i] = new ArrayList();
-                cluster[i] = new ArrayList();   
+                cluster[i] = new ArrayList();
             }
             // visited array to check the node aded for the mst or not
-            int []vis = new int[ptr];
+            int[] vis = new int[ptr];
             int n = ptr;
-            edje []mst = new edje[n - 1];
+            edje[] mst = new edje[n - 1];
             int indx = 0;
-            for (int i = 0; i <n; i++)
+            for (int i = 0; i < n; i++)
             {
                 vis[i] = 0;
             }
@@ -233,7 +256,7 @@ namespace ImageQuantization
             temp.v = 0;
             temp.u = 0;
             // first add the first colour to the mst 
-            for(int i = 1; i < n; i++)
+            for (int i = 1; i < n; i++)
             {
                 mn[i].w = calc(distinct[i], distinct[0]);
                 mn[i].u = i;
@@ -241,12 +264,12 @@ namespace ImageQuantization
             }
             vis[0] = 1;
             mn[0].w = 1e9;
-            while(true)
+            while (true)
             {
                 // every time add one node with the lowest cost for mst
                 bool f = false;
                 temp.w = 1e9;
-                for(int i =1; i<n; i++)
+                for (int i = 1; i < n; i++)
                 {
                     if (temp.w > mn[i].w)
                     {
@@ -262,7 +285,7 @@ namespace ImageQuantization
                 sum += temp.w;
                 vis[temp.u] = 1;
                 mn[temp.u].w = 1e9;
-                for(int i = 1;i<n;i++)
+                for (int i = 1; i < n; i++)
                 {
                     if (vis[i] == 1)
                         continue;
@@ -276,37 +299,51 @@ namespace ImageQuantization
                 }
             }
             // print the mst sum in the form
+            MainForm.v = sum;
+            //////////////////////////////////////////////////
 
-            MainForm.v = sum ;
+
+            /////////////////////////////////////////
+            ///Palette Generation (k-Clusters)
+            //////////////////////////////////////////
+
+
+            ///Sort by Launda expression
             Array.Sort(mst, (x, y) => y.w.CompareTo(x.w));
-            // take 
+            // Saving K-clusters
             int kc = (int)sigma;
-            // array to store the colours i will use
+            // Colours of index  To be used 
             RGBPixel[] K_Colours = new RGBPixel[kc];
             indx = 0;
-            // i remove the biggest k edjes to make the mst k clusters 
-            for(int i = kc -1;i<n-1;i++)
+            // Remove the biggest edges of the colour k to make the MST k clusters 
+            for (int i = kc - 1; i < n - 1; i++)
             {
                 int u = mst[i].u, v = mst[i].v;
+                //Adding each colour From the spaning tree
                 adj[u].Add(v);
                 adj[v].Add(u);
             }
-            for(int i = 0;i<n;i++)
+            //Make a new non-visted array
+            for (int i = 0; i < n; i++)
             {
                 vis[i] = 0;
             }
-            for(int i = 0;i<n;i++)
+
+            for (int i = 0; i < n; i++)
             {
+                //Check if visted
                 if (vis[i] == 1)
                     continue;
-                Queue<int> qe = new Queue<int>(); 
+                //Enqueue Each visted vertex of the tree
+                Queue<int> qe = new Queue<int>();
                 qe.Enqueue(i);
-                while(qe.Count>0)
+                //////////
+                while (qe.Count > 0)
                 {
                     int node = qe.Dequeue();
                     cluster[indx].Add(node);
                     vis[node] = 1;
-                    foreach(int j in adj[node])
+                    foreach (int j in adj[node])
                     {
                         if (vis[j] == 1)
                             continue;
@@ -315,63 +352,72 @@ namespace ImageQuantization
                     }
                 }
                 indx++;
-
+                ////////////////
             }
             indx = 0;
-          
-           for(int i = 0;i<kc;i++)
-            {
 
+
+            for (int i = 0; i < kc; i++)
+            {
+                // loop for every clusters and select the colour with max distance is minmum
                 double w = 1e9;
                 int center = 0;
-                // loop for every clusters and select the colour with max distance is minmum
+                //checking on each cluster 
                 foreach (int j in cluster[i])
                 {
 
                     double cur = 0;
-                    foreach (int jj in cluster[i])
+                    //Check to get max distance between each cluster
+                    foreach (int k in cluster[i])
                     {
-                        cur = Math.Max(cur, calc(distinct[j], distinct[jj]));
+                        cur = Math.Max(cur, calc(distinct[j], distinct[k]));
                     }
-                    if(cur<w)
+                    //Exchange Each MAX Distance Between Each Cluster
+                    if (cur < w)
                     {
                         w = cur;
                         center = j;
                     }
                 }
                 K_Colours[indx++] = distinct[center];
-
             }
-           for(int i = 0;i<n;i++)
+
+            for (int i = 0; i < n; i++) 
             {
-                // chose for every colour the best colour for it 
+                // chose The Best colour (Minimum Available Colour)
                 double w = 1e9;
                 RGBPixel col;
                 col.red = 0;
                 col.green = 0;
                 col.blue = 0;
-                for(int j = 0;j<kc;j++)
+                for (int j = 0; j < kc; j++)
                 {
-                    if (calc(distinct[i], K_Colours[j])<w)
+                    if (calc(distinct[i], K_Colours[j]) < w)
                     {
                         w = calc(distinct[i], K_Colours[j]);
                         col = K_Colours[j];
                     }
                 }
-                map[distinct[i].red,distinct[i].green,distinct[i].blue] = col;
+                //Adding each distinct colour at the map
+                map[distinct[i].red, distinct[i].green, distinct[i].blue] = col;
             }
-           // print the final 
-           for(int i = 0;i<Height;i++)
-                for(int j = 0;j<Width;j++)
+            // print the final Cluster Colour
+            for (int i = 0; i < Height; i++)
+                for (int j = 0; j < Width; j++)
                 {
-                    int r = ImageMatrix[i,j].red;
-                    int g = ImageMatrix[i,j].green; 
-                    int b = ImageMatrix[i,j].blue;
-                    ImageMatrix[i,j] = map[r,g,b];
-                    
+                    int r = ImageMatrix[i, j].red;
+                    int g = ImageMatrix[i, j].green;
+                    int b = ImageMatrix[i, j].blue;
+                    ImageMatrix[i, j] = map[r, g, b];
+
                 }
 
+            stopwatch.Stop();
+            MainForm.show_time(stopwatch.ElapsedMilliseconds / 1000.00);
+            
+
             return ImageMatrix;
+            ///////////////////////////////////////
         }
       
 
