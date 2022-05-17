@@ -45,9 +45,10 @@ namespace ImageQuantization
         /// <returns>2D array of colors</returns>
         public static double calc(RGBPixel x, RGBPixel y)
         {
-            double ret =  Math.Abs(x.red - y.red)* Math.Abs(x.red - y.red);
-            ret += Math.Abs(x.green - y.green) * Math.Abs(x.green - y.green);
-            ret += Math.Abs(x.blue - y.blue) * Math.Abs(x.blue - y.blue);
+            //((r1 - r2)^2 + (g1 - g2)^2 + (b1 - b2)^2) ^ (1/2)
+            double ret = (x.red - y.red) * (x.red - y.red);
+            ret += (x.green - y.green) * (x.green - y.green);
+            ret += (x.blue - y.blue) * (x.blue - y.blue);
             return Math.Sqrt(ret);
         }
 
@@ -193,32 +194,21 @@ namespace ImageQuantization
             int Height = GetHeight(ImageMatrix);
             int Width = GetWidth(ImageMatrix);
 
-            // Checking if the color is visted or not by A new Array 
-
+            // Checking if the color is visted or not by A new Array  (All vis = 0)  
             int[,,] visted = new int[260, 260, 260];
 
             //Map passing by every colour to select k-cluster  
-
             RGBPixel[,,] map = new RGBPixel[260, 260, 260];
 
             // Array selecting Distinct colours
-
             RGBPixel[] distinct = new RGBPixel[6000000];
 
             int ptr = 0;
-
-/*            for (int i = 0; i < 256; i++)
-                for (int j = 0; j < 256; j++)
-                    for (int k = 0; k < 256; k++)
-                        visted[i, j, k] = 0;
-*/
-
-            //complexty=N^2
+            //complexty = O(N^2)
             for (int i = 0; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                 {
                     RGBPixel r = ImageMatrix[i, j];
-
                     if (visted[r.red, r.green, r.blue] == 0)
                     {
                         distinct[ptr++] = ImageMatrix[i, j];
@@ -233,7 +223,7 @@ namespace ImageQuantization
             ArrayList[] adj = new ArrayList[ptr];
             // to store the colours in the same cluster
             ArrayList[] cluster = new ArrayList[ptr];
-          
+
             for (int i = 0; i < ptr; i++)
             {
                 adj[i] = new ArrayList();
@@ -241,13 +231,12 @@ namespace ImageQuantization
             }
             // visited array to check the node aded for the mst or not
             int[] vis = new int[ptr];
+
             int n = ptr;
+
             edje[] mst = new edje[n - 1];
+
             int indx = 0;
-            for (int i = 0; i < n; i++)
-            {
-                vis[i] = 0;
-            }
             vis[0] = 1;
             double sum = 0;
             edje[] mn = new edje[n];
@@ -323,11 +312,10 @@ namespace ImageQuantization
                 adj[u].Add(v);
                 adj[v].Add(u);
             }
+
+
             //Make a new non-visted array
-            for (int i = 0; i < n; i++)
-            {
-                vis[i] = 0;
-            }
+            vis = new int[ptr];
 
             for (int i = 0; i < n; i++)
             {
@@ -382,7 +370,7 @@ namespace ImageQuantization
                 K_Colours[indx++] = distinct[center];
             }
 
-            for (int i = 0; i < n; i++) 
+            for (int i = 0; i < n; i++)
             {
                 // chose The Best colour (Minimum Available Colour)
                 double w = 1e9;
@@ -413,14 +401,11 @@ namespace ImageQuantization
                 }
 
             stopwatch.Stop();
-            MainForm.show_time(stopwatch.ElapsedMilliseconds / 1000.00);
-            
+            MainForm.show_time(stopwatch.ElapsedMilliseconds / 1000.0);
+
 
             return ImageMatrix;
             ///////////////////////////////////////
         }
-      
-
-
     }
 }
