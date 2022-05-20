@@ -45,6 +45,7 @@ namespace ImageQuantization
         /// <returns>2D array of colors</returns>
         public static double calc(RGBPixel x, RGBPixel y)
         {
+            // log2(1e18)
             //((r1 - r2)^2 + (g1 - g2)^2 + (b1 - b2)^2) ^ (1/2)
             double ret = (x.red - y.red) * (x.red - y.red);
             ret += (x.green - y.green) * (x.green - y.green);
@@ -204,7 +205,7 @@ namespace ImageQuantization
             RGBPixel[] distinct = new RGBPixel[6000000];
 
             int ptr = 0;
-            //complexty = O(N^2)
+            //complexty = O(N^2) when N is the length of the photo
             for (int i = 0; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                 {
@@ -223,7 +224,7 @@ namespace ImageQuantization
             ArrayList[] adj = new ArrayList[ptr];
             // to store the colours in the same cluster
             ArrayList[] cluster = new ArrayList[ptr];
-
+            // O(N) when N is the number of distincit colours
             for (int i = 0; i < ptr; i++)
             {
                 adj[i] = new ArrayList();
@@ -231,7 +232,6 @@ namespace ImageQuantization
             }
             // visited array to check the node aded for the mst or not
             int[] vis = new int[ptr];
-
             int n = ptr;
 
             edje[] mst = new edje[n - 1];
@@ -245,6 +245,7 @@ namespace ImageQuantization
             temp.v = 0;
             temp.u = 0;
             // first add the first colour to the mst 
+            // O(N) when N is the number of distincit colours
             for (int i = 1; i < n; i++)
             {
                 mn[i].w = calc(distinct[i], distinct[0]);
@@ -253,6 +254,7 @@ namespace ImageQuantization
             }
             vis[0] = 1;
             mn[0].w = 1e9;
+            // O(N^2) when N the number of distincit colours
             while (true)
             {
                 // every time add one node with the lowest cost for mst
@@ -296,7 +298,7 @@ namespace ImageQuantization
             ///Palette Generation (k-Clusters)
             //////////////////////////////////////////
 
-
+            // O(N* log(n)) N the number of distincit colours
             ///Sort by Launda expression
             Array.Sort(mst, (x, y) => y.w.CompareTo(x.w));
             // Saving K-clusters
@@ -316,7 +318,7 @@ namespace ImageQuantization
 
             //Make a new non-visted array
             vis = new int[ptr];
-
+            // O(N) the number of distincit colours
             for (int i = 0; i < n; i++)
             {
                 //Check if visted
@@ -344,7 +346,7 @@ namespace ImageQuantization
             }
             indx = 0;
 
-
+            // O(N^2) N the number of distincit colours 
             for (int i = 0; i < kc; i++)
             {
                 // loop for every clusters and select the colour with max distance is minmum
@@ -369,7 +371,8 @@ namespace ImageQuantization
                 }
                 K_Colours[indx++] = distinct[center];
             }
-
+            // map every colour to new one
+            // O(N*K)
             for (int i = 0; i < n; i++)
             {
                 // chose The Best colour (Minimum Available Colour)
@@ -390,6 +393,7 @@ namespace ImageQuantization
                 map[distinct[i].red, distinct[i].green, distinct[i].blue] = col;
             }
             // print the final Cluster Colour
+            // O(N^2)
             for (int i = 0; i < Height; i++)
                 for (int j = 0; j < Width; j++)
                 {

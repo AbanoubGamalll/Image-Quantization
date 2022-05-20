@@ -53,3 +53,14 @@ C:\Users\Abanoub\Github Project\Image-Quantization\ImageQuantization\obj\Debug\I
 C:\Users\Abanoub\Github Project\Image-Quantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.CoreCompileInputs.cache
 C:\Users\Abanoub\Github Project\Image-Quantization\ImageQuantization\obj\Debug\ImageQuantization.exe
 C:\Users\Abanoub\Github Project\Image-Quantization\ImageQuantization\obj\Debug\ImageQuantization.pdb
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\bin\Debug\ImageQuantization.exe.config
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\bin\Debug\ImageQuantization.exe
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\bin\Debug\ImageQuantization.pdb
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.AssemblyReference.cache
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.SuggestedBindingRedirects.cache
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.MainForm.resources
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.Properties.Resources.resources
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.GenerateResource.cache
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.csproj.CoreCompileInputs.cache
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.exe
+C:\Users\Shady\Desktop\[2] Image Quantization\ImageQuantization\obj\Debug\ImageQuantization.pdb
